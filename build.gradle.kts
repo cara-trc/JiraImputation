@@ -2,9 +2,10 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
     id("org.jetbrains.intellij.platform") version "2.3.0"
+    kotlin("plugin.serialization") version "1.9.25"
 }
 
-group = "com.example"
+group = "com.jiraimputation"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -23,7 +24,11 @@ dependencies {
 
         // Add necessary plugin dependencies for compilation here, example:
         // bundledPlugin("com.intellij.java")
+
+        bundledPlugins(listOf("com.intellij.java", "Git4Idea"))
     }
+    implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
 
 intellijPlatform {
@@ -37,14 +42,16 @@ intellijPlatform {
     """.trimIndent()
     }
 }
-
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "21"
+        kotlinOptions.jvmTarget = "17"
     }
+}
+kotlin {
+    jvmToolchain(17)
 }
