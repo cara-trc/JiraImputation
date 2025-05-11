@@ -7,8 +7,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.jiraimputation.models.BranchLog
 import git4idea.GitUtil
-import kotlinx.serialization.json.Json
+import kotlinx.datetime.Clock
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
 import java.util.concurrent.Executors
@@ -43,7 +44,7 @@ class TrackerPlugin : ProjectActivity {
             Disposer.register(project) {
                 scheduler.shutdownNow()
                 println("→ Scheduler arrêté proprement")
-                debugFile.appendText("[${now()}] Scheduler arrêté\n")
+                debugFile.appendText("[${nowForLog()}] Scheduler arrêté\n")
             }
 
             scheduler.scheduleAtFixedRate({
@@ -52,10 +53,17 @@ class TrackerPlugin : ProjectActivity {
                     return@scheduleAtFixedRate
                 }
 
-                val branch = repo.currentBranchName
-                if (branch == null) {
-                    debugFile.appendText("[${now()}] Branche null\n")
+                val fullBranch = repo.currentBranchName
+                if (fullBranch == null) {
+                    debugFile.appendText("[${nowForLog()}] Branche null\n")
                     return@scheduleAtFixedRate
+                }
+
+                // ✅ Extraction de l'issue key : "feature/PRJ-1" → "PRJ-1"
+                val issueKey = if (fullBranch.contains("/")) {
+                    fullBranch.substringAfterLast("/")
+                } else {
+                    fullBranch
                 }
 
                 try {
@@ -65,14 +73,15 @@ class TrackerPlugin : ProjectActivity {
                         emptyList()
                     }
 
-                    val updated = existing + BranchLog(now(), branch)
+                    val newTimestamp = Clock.System.now().toString()
+                    val updated = existing + BranchLog(newTimestamp, issueKey)
                     logFile.writeText(json.encodeToString(updated))
 
-                    println("→ Branche logguée : $branch")
-                    debugFile.appendText("[${now()}] Loggué: $branch\n")
+                    println("→ Branche logguée : $issueKey")
+                    debugFile.appendText("[${nowForLog()}] Loggué: $issueKey\n")
 
                 } catch (e: Exception) {
-                    debugFile.appendText("[${now()}] Erreur : ${e.message}\n")
+                    debugFile.appendText("[${nowForLog()}] Erreur : ${e.message}\n")
                     logger.error("Erreur JSON log", e)
                 }
 
@@ -80,5 +89,6 @@ class TrackerPlugin : ProjectActivity {
         }
     }
 
-    private fun now(): String = LocalDateTime.now().toString()
+    // Horodatage local uniquement pour les logs de debug
+    private fun nowForLog(): String = LocalDateTime.now().toString()
 }

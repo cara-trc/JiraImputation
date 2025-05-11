@@ -14,9 +14,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
 import java.io.File
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.*
 import java.time.format.DateTimeFormatter
 
 // --------- Request DTO ---------
@@ -62,7 +60,6 @@ object WorklogSender {
         .create(JiraApi::class.java)
 
     fun sendAll(blocks: List<WorklogBlock>) {
-        val zone = TimeZone.of("Europe/Paris")
         val userHome = System.getProperty("user.home")
         val trackerDir = File(userHome, ".jira-tracker")
         val debugFile = File(trackerDir, "sender.log")
@@ -71,18 +68,12 @@ object WorklogSender {
         debugFile.appendText("start sendAll\n")
 
         blocks.forEach { block ->
-            val localStart = block.start.toLocalDateTime(zone)
-            val localStartJava = LocalDateTime.of(
-                localStart.year,
-                localStart.monthNumber,
-                localStart.dayOfMonth,
-                localStart.hour,
-                localStart.minute,
-                localStart.second
-            )
+            val zone = ZoneId.of("Europe/Paris")
+            val javaInstant = java.time.Instant.ofEpochSecond(block.start.epochSeconds)
+            val offset = javaInstant.atZone(zone).toOffsetDateTime()
 
-            val offsetStart = localStartJava.atOffset(ZoneOffset.of("+02:00"))
-            val formatted = offsetStart.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+            val formatted = offset.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+
 
             val request = WorklogRequest(
                 started = formatted,
@@ -100,4 +91,6 @@ object WorklogSender {
             debugFile.appendText(logLine + "\n")
         }
     }
+
+
 }
