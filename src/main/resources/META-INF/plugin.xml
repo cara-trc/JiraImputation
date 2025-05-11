@@ -16,18 +16,30 @@
 
     <actions>
         <action id="com.jiratracker.LogBranchAction"
-                class="com.jiraimputation.LogBranchAction"
+                class="com.jiraimputation.logger.LogBranchAction"
                 text="Log Current Branch"
                 description="Logs the current Git branch to worklog.json">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-    </actions>
 
-    <actions>
-        <action id="com.jiraimputation.ForceLogBranchAction"
-                class="com.jiraimputation.ForceLogBranchAction"
+        <action id="com.jiraimputation.logger.ForceLogBranchAction"
+                class="com.jiraimputation.logger.ForceLogBranchAction"
                 text="Forcer log branche maintenant"
                 description="Loggue manuellement la branche Git active">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="SendWorklogTestAction"
+                class="com.jiraimputation.sender.SendWorklogTestAction"
+                text="Test: Send Jira Worklog"
+                description="Test d'envoi vers Jira via TES-2">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="IntegrationTest"
+                class="com.jiraimputation.WorklogAggregateSendAction"
+                text="Test conditions relles"
+                description="Test d'envoi vers Jira via JIR-1">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>
@@ -38,7 +50,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Ton postStartupActivity ici -->
-        <postStartupActivity implementation="com.jiraimputation.TrackerPlugin"/>
+        <postStartupActivity implementation="com.jiraimputation.logger.TrackerPlugin"/>
 
         <!-- Déclaration du groupe de notifications -->
         <notificationGroup id="JiraImputation Notifications"

@@ -1,4 +1,4 @@
-package com.jiraimputation
+package com.jiraimputation.logger
 
 
 import com.intellij.notification.NotificationGroupManager

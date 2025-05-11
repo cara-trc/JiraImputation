@@ -1,14 +1,13 @@
-package com.jiraimputation
+package com.jiraimputation.logger
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
+import com.jiraimputation.models.BranchLog
 import git4idea.GitUtil
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import java.io.File
 import java.time.LocalDateTime

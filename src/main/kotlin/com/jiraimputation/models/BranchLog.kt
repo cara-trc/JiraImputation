@@ -1,4 +1,4 @@
-package com.jiraimputation
+package com.jiraimputation.models
 
 import kotlinx.serialization.Serializable
 

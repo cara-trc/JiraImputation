@@ -1,12 +1,11 @@
-package com.jiraimputation
+package com.jiraimputation.logger
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
+import com.jiraimputation.models.BranchLog
 import git4idea.GitUtil
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
