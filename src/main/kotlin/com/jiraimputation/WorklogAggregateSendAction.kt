@@ -17,7 +17,7 @@ class WorklogAggregateSendAction : AnAction() {
         try {
 
             val aggregator = WorklogAggregator()
-            val fakeLogPath = "C:\\Users\\DSPCv\\.jira-tracker\\worklog.json"
+            val fakeLogPath = "C:\\Users\\DSPCv\\.jira-tracker\\fakeworklog.txt"
             val content = File(fakeLogPath).readText()
 
             val logs = Json.decodeFromString<List<BranchLog>>(content)

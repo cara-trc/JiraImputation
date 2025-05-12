@@ -3,51 +3,52 @@ package com.jiraimputation.aggregator
 import com.jiraimputation.models.BranchLog
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.*
+import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.minutes
 
+const val CHUNK_SIZE = 3
+
 class WorklogAggregator {
-
-    fun aggregateLogsToWorklogBlocks(logs: List<BranchLog>): List<WorklogBlock> {
-        if (logs.isEmpty()) return emptyList()
-
-        val parsedLogs = logs.map {
-            it.branch to Instant.parse(it.timestamp)
-        }.sortedBy { it.second }
-
-        val chunkSize = 3 // 3 logs de 5 min = 15 min
-        val chunkDuration = 15.minutes
-
+    val chunkDuration = 15.minutes
+    fun aggregateLogsToWorklogBlocks(parsedLogs: List<BranchLog>): List<WorklogBlock> {
         val grouped = mutableListOf<Triple<String, Instant, Int>>()
-        var index = 0
 
-        while (index + chunkSize <= parsedLogs.size) {
-            val chunk = parsedLogs.subList(index, index + chunkSize)
-            val (branches, times) = chunk.map { it.first } to chunk.map { it.second }
+        val sortedLogs = parsedLogs.sortedBy { Instant.parse(it.timestamp) }
+        // imputation starts on next multiple of 15 minutes so it is displayed correctly on calendar
+        val firstValidStart = Instant.parse(sortedLogs.first().timestamp).ceilToQuarterHour()
+
+        val logsToAggregate = sortedLogs.filter { Instant.parse(it.timestamp) >= firstValidStart }
+        //main algo
+        logsToAggregate.foldIndexed(Unit) { index, _, _ ->
+            if (index + CHUNK_SIZE > parsedLogs.size) return@foldIndexed
+
+            val chunk = parsedLogs.subList(index, index + CHUNK_SIZE)
+            val branches = chunk.map { it.branch }
+            val times = chunk.map { Instant.parse(it.timestamp) }
 
             val start = times.first().roundToQuarterHour()
             val end = times.last().plus(5.minutes)
-            val expectedEnd = start.plus(chunkDuration)
+            val expectedEnd = start + chunkDuration
 
-            // Si le chunk n'est pas propre (trou), skip 1
-            if (end > expectedEnd) {
-                index += 1
-                continue
+            if (end <= expectedEnd) {
+                val majorityBranch = branches.groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key
+                grouped.add(Triple(majorityBranch, start, chunkDuration.inWholeSeconds.toInt()))
             }
-
-            val majorityBranch = branches.groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key
-            grouped.add(Triple(majorityBranch, start, chunkDuration.inWholeSeconds.toInt()))
-            index += chunkSize
         }
 
-        // ✅ Nouveau : gestion du dernier bloc incomplet à la fin
-        if (index < parsedLogs.size) {
-            val remaining = parsedLogs.subList(index, parsedLogs.size)
-            val (branches, times) = remaining.map { it.first } to remaining.map { it.second }
+        // If json ends with a chunk <3 (if i stop working at 18h20 for exemple), the next chunk is extended to the next multiple of 15min
+        if (logsToAggregate.size % CHUNK_SIZE != 0) {
+            val remainingStart = parsedLogs.size - (CHUNK_SIZE - 1)
+            if (remainingStart in 0 until parsedLogs.size) {
+                val remaining = parsedLogs.subList(remainingStart, parsedLogs.size)
+                val branches = remaining.map { it.branch }
+                val times = remaining.map { Instant.parse(it.timestamp) }
 
-            val start = times.first().roundToQuarterHour()
-            val majorityBranch = branches.groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key
+                val start = times.first().roundToQuarterHour()
+                val majorityBranch = branches.groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key
 
-            grouped.add(Triple(majorityBranch, start, chunkDuration.inWholeSeconds.toInt()))
+                grouped.add(Triple(majorityBranch, start, chunkDuration.inWholeSeconds.toInt()))
+            }
         }
 
         return mergeConsecutiveBlocks(
@@ -56,6 +57,8 @@ class WorklogAggregator {
             }
         )
     }
+
+
 
 
     private fun Instant.roundToQuarterHour(): Instant {
@@ -73,6 +76,37 @@ class WorklogAggregator {
 
         return rounded.toInstant(zone)
     }
+    private fun Instant.ceilToQuarterHour(): Instant {
+        val zone = TimeZone.currentSystemDefault()
+        val local = this.toLocalDateTime(zone)
+
+        val roundedMinute = if (local.minute % 15 == 0) {
+            local.minute
+        } else {
+            ((local.minute / 15) + 1) * 15
+        }
+
+        val adjusted = if (roundedMinute < 60) {
+            LocalDateTime(
+                year = local.year,
+                monthNumber = local.monthNumber,
+                dayOfMonth = local.dayOfMonth,
+                hour = local.hour,
+                minute = roundedMinute
+            )
+        } else {
+            LocalDateTime(
+                year = local.year,
+                monthNumber = local.monthNumber,
+                dayOfMonth = local.dayOfMonth,
+                hour = local.hour + 1,
+                minute = 0
+            )
+        }
+
+        return adjusted.toInstant(zone)
+    }
+
 
     private fun mergeConsecutiveBlocks(blocks: List<WorklogBlock>): List<WorklogBlock> {
         if (blocks.isEmpty()) return emptyList()

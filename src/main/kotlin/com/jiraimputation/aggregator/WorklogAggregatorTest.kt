@@ -30,8 +30,8 @@ class AggregatorTest {
     @Test
     fun `less than 3 logs still creates one 15min block`() {
         val logs = listOf(
-            BranchLog("2025-05-11T09:00:00Z", "JIR-1"),
-            BranchLog("2025-05-11T09:05:00Z", "JIR-1")
+            BranchLog("2025-05-11T18:05:00Z", "JIR-1"),
+            BranchLog("2025-05-11T18:10:00Z", "JIR-1")
         )
 
         val result = aggregator.aggregateLogsToWorklogBlocks(logs)
@@ -93,7 +93,6 @@ class AggregatorTest {
         )
 
         val result = aggregator.aggregateLogsToWorklogBlocks(logs)
-
         assertEquals(1, result.size)
         assertEquals(Instant.parse("2025-05-11T09:00:00Z"), result.first().start)
     }

@@ -69,11 +69,10 @@ object WorklogSender {
 
         blocks.forEach { block ->
             val zone = ZoneId.of("Europe/Paris")
-            val javaInstant = java.time.Instant.ofEpochSecond(block.start.epochSeconds)
+            val javaInstant = Instant.ofEpochSecond(block.start.epochSeconds)
             val offset = javaInstant.atZone(zone).toOffsetDateTime()
 
             val formatted = offset.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
-
 
             val request = WorklogRequest(
                 started = formatted,

@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit
 
 class TrackerPlugin : ProjectActivity {
 
-    private val logger = Logger.getInstance("JiraImputation")
     private val json = Json { prettyPrint = true }
 
     override suspend fun execute(project: Project) {
@@ -43,7 +42,6 @@ class TrackerPlugin : ProjectActivity {
 
             Disposer.register(project) {
                 scheduler.shutdownNow()
-                println("→ Scheduler arrêté proprement")
                 debugFile.appendText("[${nowForLog()}] Scheduler arrêté\n")
             }
 
@@ -67,22 +65,22 @@ class TrackerPlugin : ProjectActivity {
                 }
 
                 try {
-                    val existing = try {
+                    val newLog = try {
                         json.decodeFromString<List<BranchLog>>(logFile.readText())
                     } catch (e: Exception) {
+                        // don't want it to crash
                         emptyList()
                     }
 
                     val newTimestamp = Clock.System.now().toString()
-                    val updated = existing + BranchLog(newTimestamp, issueKey)
-                    logFile.writeText(json.encodeToString(updated))
+                    val updatedJson = newLog + BranchLog(newTimestamp, issueKey)
+                    logFile.writeText(json.encodeToString(updatedJson))
 
-                    println("→ Branche logguée : $issueKey")
-                    debugFile.appendText("[${nowForLog()}] Loggué: $issueKey\n")
+                    println("→ Branch logged : $issueKey")
+                    debugFile.appendText("[${nowForLog()}] Log: $issueKey\n")
 
                 } catch (e: Exception) {
-                    debugFile.appendText("[${nowForLog()}] Erreur : ${e.message}\n")
-                    logger.error("Erreur JSON log", e)
+                    debugFile.appendText("[${nowForLog()}] Error : ${e.message}\n")
                 }
 
             }, 0, 1, TimeUnit.MINUTES)
