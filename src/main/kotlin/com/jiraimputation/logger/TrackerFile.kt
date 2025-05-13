@@ -50,6 +50,11 @@ class TrackerPlugin : ProjectActivity {
                     scheduler.shutdownNow()
                     return@scheduleAtFixedRate
                 }
+                if (TrackerState.trackingPaused) {
+                    debugFile.appendText("[TrackerPlugin] Tracking is paused, skipping log.\n")
+                    return@scheduleAtFixedRate // ou return si pas dans un lambda
+                }
+
 
                 val fullBranch = repo.currentBranchName
                 if (fullBranch == null) {
@@ -82,7 +87,7 @@ class TrackerPlugin : ProjectActivity {
                 } catch (e: Exception) {
                     debugFile.appendText("[${nowForLog()}] Error : ${e.message}\n")
                 }
-
+//TODO repass to 5
             }, 0, 1, TimeUnit.MINUTES)
         }
     }
