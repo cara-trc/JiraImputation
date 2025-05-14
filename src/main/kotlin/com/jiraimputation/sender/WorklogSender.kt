@@ -63,6 +63,7 @@ object WorklogSender {
         val userHome = System.getProperty("user.home")
         val trackerDir = File(userHome, ".jira-tracker")
         val debugFile = File(trackerDir, "sender.log")
+        val logFile = File(trackerDir, "worklog.json")
 
         val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         debugFile.appendText("start sendAll\n")
@@ -88,6 +89,10 @@ object WorklogSender {
             }
 
             debugFile.appendText(logLine + "\n")
+            if(response.isSuccessful){
+                //logs sent successfully, reset the json
+                logFile.writeText("")
+            }
         }
     }
 

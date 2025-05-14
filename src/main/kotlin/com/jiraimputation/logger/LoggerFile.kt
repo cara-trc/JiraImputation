@@ -1,7 +1,6 @@
 package com.jiraimputation.logger
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -50,7 +49,7 @@ class TrackerPlugin : ProjectActivity {
                     scheduler.shutdownNow()
                     return@scheduleAtFixedRate
                 }
-                if (TrackerState.trackingPaused) {
+                if (LoggerState.trackingPaused) {
                     debugFile.appendText("[TrackerPlugin] Tracking is paused, skipping log.\n")
                     return@scheduleAtFixedRate // ou return si pas dans un lambda
                 }
@@ -87,8 +86,8 @@ class TrackerPlugin : ProjectActivity {
                 } catch (e: Exception) {
                     debugFile.appendText("[${nowForLog()}] Error : ${e.message}\n")
                 }
-//TODO repass to 5
-            }, 0, 1, TimeUnit.MINUTES)
+
+            }, 0, 5, TimeUnit.MINUTES)
         }
     }
 

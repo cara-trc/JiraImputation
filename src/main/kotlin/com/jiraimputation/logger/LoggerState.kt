@@ -1,6 +1,6 @@
 package com.jiraimputation.logger
 
 //singleton for tracker use
-object TrackerState {
+object LoggerState {
     var trackingPaused: Boolean = false
 }
