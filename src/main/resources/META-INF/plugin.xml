@@ -15,30 +15,9 @@
     <description>"This project is a side project from myself to get rid of the burden of the imputation process. Not meant to be online and mean for personal use</description>*/
 
     <actions>
-        <action id="com.jiratracker.LogBranchAction"
-                class="com.jiraimputation.logger.LogBranchAction"
-                text="Log Current Branch"
-                description="Logs the current Git branch to worklog.json">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
-
-        <action id="com.jiraimputation.logger.ForceLogBranchAction"
-                class="com.jiraimputation.logger.ForceLogBranchAction"
-                text="Forcer log branche maintenant"
-                description="Loggue manuellement la branche Git active">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
-
-        <action id="SendWorklogTestAction"
-                class="com.jiraimputation.sender.SendWorklogTestAction"
-                text="Test: Send Jira Worklog"
-                description="Test d'envoi vers Jira via TES-2">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
-
         <action id="IntegrationTest"
                 class="com.jiraimputation.WorklogAggregateSendAction"
-                text="Test conditions relles"
+                text="Call It A Day"
                 description="Test d'envoi vers Jira via JIR-1">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
