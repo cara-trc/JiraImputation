@@ -1,5 +1,6 @@
 package com.jiraimputation.aggregator
 
+import com.jiraimputation.chunkWhile
 import com.jiraimputation.models.BranchLog
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.*
@@ -16,31 +17,37 @@ class WorklogAggregator {
 
         val parsedLogs = logs.sortedBy { Instant.parse(it.timestamp) }
         val grouped = buildList {
-            parsedLogs.chunked(CHUNK_SIZE).forEachIndexed { i, chunk ->
-                val times = chunk.map { Instant.parse(it.timestamp) }
-                val start = times.first()
-
-                if (chunk.size == CHUNK_SIZE) {
-                    val end = times.last().plus(5.minutes)
-                    val expectedEnd = start + chunkDuration
-
-                    if (end <= expectedEnd) {
-                        val majority = chunk.map { it.branch }
-                            .groupingBy { it }
-                            .eachCount()
-                            .maxByOrNull { it.value }!!
-                            .key
-
-                        add(Triple(majority, start, chunkDuration.inWholeSeconds.toInt()))
-                    }
-                } else {
-                    // Bloc final incomplet
-                    val end = times.last().plus(5.minutes)
-                    val duration = (end.epochSeconds - start.epochSeconds).toInt()
-                    val branch = chunk.first().branch
-                    add(Triple(branch, start, duration))
+            parsedLogs
+                .chunkWhile { a, b ->
+                    val t1 = Instant.parse(a.timestamp)
+                    val t2 = Instant.parse(b.timestamp)
+                    t1.until(t2, DateTimeUnit.MINUTE) <= 5
                 }
-            }
+                .flatMap { it.chunked(CHUNK_SIZE) }
+                .forEach { chunk ->
+                    val times = chunk.map { Instant.parse(it.timestamp) }
+                    val start = times.first()
+
+                    if (chunk.size == CHUNK_SIZE) {
+                        val end = times.last().plus(5.minutes)
+                        val expectedEnd = start + chunkDuration
+
+                        if (end <= expectedEnd) {
+                            val majority = chunk.map { it.branch }
+                                .groupingBy { it }
+                                .eachCount()
+                                .maxByOrNull { it.value }!!
+                                .key
+
+                            add(Triple(majority, start, chunkDuration.inWholeSeconds.toInt()))
+                        }
+                    } else {
+                        val end = times.last().plus(5.minutes)
+                        val duration = (end.epochSeconds - start.epochSeconds).toInt()
+                        val branch = chunk.first().branch
+                        add(Triple(branch, start, duration))
+                    }
+                }
         }
 
         return mergeConsecutiveBlocks(

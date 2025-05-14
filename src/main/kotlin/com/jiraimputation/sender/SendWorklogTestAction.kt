@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 
 import kotlinx.datetime.*
-
+//TODO deletenot useful anymore
 class SendWorklogTestAction : AnAction("Test Jira Worklog Send"), DumbAware {
 
     override fun actionPerformed(e: AnActionEvent) {
