@@ -4,10 +4,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
-import com.jiraimputation.models.BranchLog
+import com.jiraimputation.models.LogEntry
 import git4idea.GitUtil
 import kotlinx.datetime.Clock
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
@@ -16,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 class TrackerPlugin : ProjectActivity {
 
-    private val json = Json { prettyPrint = true }
+    private val json = Json { prettyPrint = false }
 
     override suspend fun execute(project: Project) {
         println("→ Plugin JiraImputation lancé pour ${project.name}")
@@ -31,11 +30,11 @@ class TrackerPlugin : ProjectActivity {
 
             val userHome = System.getProperty("user.home")
             val trackerDir = File(userHome, ".jira-tracker")
-            val logFile = File(trackerDir, "worklog.json")
+            val logFile = File(trackerDir, "worklog.json") // .json pour JSON Lines
             val debugFile = File(trackerDir, "debug.log")
 
             trackerDir.mkdirs()
-            if (!logFile.exists()) logFile.writeText("[]")
+            if (!logFile.exists()) logFile.createNewFile()
 
             val scheduler = Executors.newSingleThreadScheduledExecutor()
 
@@ -49,11 +48,10 @@ class TrackerPlugin : ProjectActivity {
                     scheduler.shutdownNow()
                     return@scheduleAtFixedRate
                 }
-                if (LoggerState.trackingPaused) {
-                    debugFile.appendText("[TrackerPlugin] Tracking is paused, skipping log.\n")
-                    return@scheduleAtFixedRate // ou return si pas dans un lambda
-                }
 
+                if (LoggerState.trackingPaused) {
+                    return@scheduleAtFixedRate
+                }
 
                 val fullBranch = repo.currentBranchName
                 if (fullBranch == null) {
@@ -61,7 +59,6 @@ class TrackerPlugin : ProjectActivity {
                     return@scheduleAtFixedRate
                 }
 
-                // ✅ Extraction de l'issue key : "feature/PRJ-1" → "PRJ-1"
                 val issueKey = if (fullBranch.contains("/")) {
                     fullBranch.substringAfterLast("/")
                 } else {
@@ -69,16 +66,9 @@ class TrackerPlugin : ProjectActivity {
                 }
 
                 try {
-                    val newLog = try {
-                        json.decodeFromString<List<BranchLog>>(logFile.readText())
-                    } catch (e: Exception) {
-                        // don't want it to crash
-                        emptyList()
-                    }
-
                     val newTimestamp = Clock.System.now().toString()
-                    val updatedJson = newLog + BranchLog(newTimestamp, issueKey)
-                    logFile.writeText(json.encodeToString(updatedJson))
+                    val entry = LogEntry.BranchLog(branch = issueKey, timestamp = newTimestamp)
+                    appendLog(logFile, entry)
 
                     println("→ Branch logged : $issueKey")
                     debugFile.appendText("[${nowForLog()}] Log: $issueKey\n")
@@ -87,10 +77,14 @@ class TrackerPlugin : ProjectActivity {
                     debugFile.appendText("[${nowForLog()}] Error : ${e.message}\n")
                 }
 
-            }, 0, 5, TimeUnit.MINUTES)
+            }, 0, 2, TimeUnit.MINUTES)
         }
     }
 
-    // Horodatage local uniquement pour les logs de debug
+    private fun appendLog(file: File, entry: LogEntry) {
+        val line = json.encodeToString(LogEntry.serializer(), entry)
+        file.appendText("$line\n")
+    }
+
     private fun nowForLog(): String = LocalDateTime.now().toString()
 }

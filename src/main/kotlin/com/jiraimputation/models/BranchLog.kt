@@ -1,9 +1,0 @@
-package com.jiraimputation.models
-
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class BranchLog(
-    val timestamp : String,
-    val branch : String
-)

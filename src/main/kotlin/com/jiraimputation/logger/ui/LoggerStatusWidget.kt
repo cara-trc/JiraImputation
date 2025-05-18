@@ -5,8 +5,11 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.TextPresentation
 import com.intellij.util.Consumer
 import com.jiraimputation.logger.LoggerState
+import com.jiraimputation.models.LogEntry
+import kotlinx.serialization.json.Json
 import java.awt.Component
 import java.awt.event.MouseEvent
+import java.io.File
 
 class LoggerStatusWidget : StatusBarWidget, TextPresentation {
 
@@ -31,6 +34,12 @@ class LoggerStatusWidget : StatusBarWidget, TextPresentation {
     override fun getClickConsumer(): Consumer<MouseEvent>? {
         return Consumer {
             LoggerState.trackingPaused = !LoggerState.trackingPaused
+            if (LoggerState.trackingPaused) {
+                val file = File(System.getProperty("user.home"), ".jira-tracker/worklog.json")
+                val json = Json { prettyPrint = false }
+                val pauseMarker = json.encodeToString(LogEntry.serializer(), LogEntry.PauseMarker)
+                file.appendText("$pauseMarker\n")
+            }
             statusBar?.updateWidget(ID()) // Rafraîchit le texte du widget
         }
     }
