@@ -77,7 +77,7 @@ class TrackerPlugin : ProjectActivity {
                     debugFile.appendText("[${nowForLog()}] Error : ${e.message}\n")
                 }
 
-            }, 0, 2, TimeUnit.MINUTES)
+            }, 0, 5, TimeUnit.MINUTES)
         }
     }
 
