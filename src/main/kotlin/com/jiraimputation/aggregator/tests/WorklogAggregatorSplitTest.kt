@@ -72,20 +72,20 @@ class WorklogAggregatorSplitTest {
     }
 
     @Test
-    fun `splitSequences survives chaotic real-life log layout with mixed branches and scattered pauses`() {
+    fun `splitSequences survives chaotic real-life log layout with mixed branches, scattered pauses, and date changes`() {
         val logs = listOf(
             // bruit initial
             LogEntry.PauseMarker,
             LogEntry.PauseMarker,
 
-            // bloc 1 : 2 logs, même branche
+            // bloc 1 : 2 logs, même branche (jour 1)
             BranchLog("FEAT-1", "2025-05-18T09:00:00Z"),
             BranchLog("FEAT-1", "2025-05-18T09:05:00Z"),
 
             // pause isolée
             LogEntry.PauseMarker,
 
-            // bloc 2 : logs en désordre
+            // bloc 2 : logs en désordre (jour 1)
             BranchLog("BUG-42", "2025-05-18T09:10:00Z"),
             BranchLog("BUG-42", "2025-05-18T09:15:00Z"),
             BranchLog("FEAT-2", "2025-05-18T09:20:00Z"),
@@ -95,22 +95,28 @@ class WorklogAggregatorSplitTest {
             // pause
             LogEntry.PauseMarker,
 
-            // bloc 3 : 1 seul log
+            // bloc 3 : 1 seul log (jour 1)
             BranchLog("HOTFIX", "2025-05-18T09:35:00Z"),
 
             // pause inutile
             LogEntry.PauseMarker,
             LogEntry.PauseMarker,
 
-            // bloc 4 : 8 logs mélangés
-            BranchLog("FEAT-3", "2025-05-18T09:40:00Z"),
-            BranchLog("FEAT-3", "2025-05-18T09:45:00Z"),
-            BranchLog("FEAT-3", "2025-05-18T09:50:00Z"),
-            BranchLog("BUG-13", "2025-05-18T09:55:00Z"),
-            BranchLog("FEAT-3", "2025-05-18T10:00:00Z"),
-            BranchLog("BUG-13", "2025-05-18T10:05:00Z"),
-            BranchLog("FEAT-3", "2025-05-18T10:10:00Z"),
-            BranchLog("FEAT-3", "2025-05-18T10:15:00Z"),
+            // bloc 4 : 8 logs mélangés (jour 2)
+            BranchLog("FEAT-3", "2025-05-19T09:40:00Z"),
+            BranchLog("FEAT-3", "2025-05-19T09:45:00Z"),
+            BranchLog("FEAT-3", "2025-05-19T09:50:00Z"),
+            BranchLog("BUG-13", "2025-05-19T09:55:00Z"),
+            BranchLog("FEAT-3", "2025-05-19T10:00:00Z"),
+            BranchLog("BUG-13", "2025-05-19T10:05:00Z"),
+            BranchLog("FEAT-3", "2025-05-19T10:10:00Z"),
+            BranchLog("FEAT-3", "2025-05-19T10:15:00Z"),
+
+            LogEntry.PauseMarker,
+
+            // ❗ bloc 5 : test changement de jour SANS pause
+            BranchLog("FEAT-4", "2025-05-19T23:55:00Z"),
+            BranchLog("FEAT-4", "2025-05-20T09:00:00Z"),
 
             // pause de fin
             LogEntry.PauseMarker
@@ -118,26 +124,46 @@ class WorklogAggregatorSplitTest {
 
         val result = aggregator.splitSequences(logs)
 
-        // 4 séquences valides attendues
-        assertEquals(4, result.size)
+        // 6 séquences attendues :
+        // - FEAT-1
+        // - BUG-42 / FEAT-2
+        // - HOTFIX
+        // - FEAT-3 / BUG-13 (jour 2)
+        // - FEAT-4 (23:55)
+        // - FEAT-4 (09:00 le lendemain)
+        assertEquals(6, result.size)
 
-        // Bloc 1 = [FEAT-1, FEAT-1]
-        assertEquals(listOf("FEAT-1", "FEAT-1"), result[0].map { it.branch })
+        // Bloc 5 = [FEAT-4] le 19
+        assertEquals(listOf("FEAT-4"), result[4].map { it.branch })
+        assertEquals("2025-05-19T23:55:00Z", result[4][0].timestamp)
 
-        // Bloc 2 = [BUG-42, BUG-42, FEAT-2, BUG-42, FEAT-2]
-        assertEquals(5, result[1].size)
-        assertEquals(listOf("BUG-42", "BUG-42", "FEAT-2", "BUG-42", "FEAT-2"), result[1].map { it.branch })
+        // Bloc 6 = [FEAT-4] le 20
+        assertEquals(listOf("FEAT-4"), result[5].map { it.branch })
+        assertEquals("2025-05-20T09:00:00Z", result[5][0].timestamp)
+    }
 
-        // Bloc 3 = [HOTFIX]
-        assertEquals(1, result[2].size)
-        assertEquals("HOTFIX", result[2][0].branch)
 
-        // Bloc 4 = 8 logs
-        assertEquals(8, result[3].size)
-        assertEquals(
-            listOf("FEAT-3", "FEAT-3", "FEAT-3", "BUG-13", "FEAT-3", "BUG-13", "FEAT-3", "FEAT-3"),
-            result[3].map { it.branch }
+    @Test
+    fun splitSequences_shouldSplitWhenDateChanges() {
+        val logs = listOf(
+            BranchLog(
+                branch = "JIR-456",
+                timestamp = "2025-05-24T23:55:00Z"
+            ),
+            BranchLog(
+                branch = "JIR-456",
+                timestamp = "2025-05-25T09:00:00Z"
+            )
         )
+
+        val sequences = WorklogAggregator().splitSequences(logs)
+        println(sequences.joinToString("\n") { it.joinToString(", ") { log -> log.timestamp } })
+
+        assertEquals("Il doit y avoir 2 séquences car les logs sont sur 2 jours différents",2, sequences.size)
+        assertEquals(1, sequences[0].size)
+        assertEquals(1, sequences[1].size)
+        assertEquals("2025-05-24T23:55:00Z", sequences[0][0].timestamp)
+        assertEquals("2025-05-25T09:00:00Z", sequences[1][0].timestamp)
     }
 
 }

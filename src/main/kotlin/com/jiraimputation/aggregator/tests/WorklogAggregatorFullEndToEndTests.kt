@@ -1,9 +1,11 @@
 package com.jiraimputation.aggregator.tests
+
 import com.jiraimputation.aggregator.WorklogAggregator
 import com.jiraimputation.models.LogEntry
 import com.jiraimputation.models.LogEntry.BranchLog
 import org.junit.Test
 import junit.framework.TestCase.assertEquals
+
 class WorklogAggregatorFullEndToEndTests {
     @Test
     fun `aggregateLogsToWorklogBlocks handles full end-to-end flow with mixed branches and pauses`() {
@@ -89,6 +91,7 @@ class WorklogAggregatorFullEndToEndTests {
         assertEquals(600, result[3].durationSeconds)
         assertEquals("2025-05-18T12:00:00Z", result[3].start.toString())
     }
+
     @Test
     fun `aggregateLogsToWorklogBlocks handles absolute chaos without crying`() {
         val logs = listOf(
@@ -160,5 +163,33 @@ class WorklogAggregatorFullEndToEndTests {
         assertEquals("2025-05-18T12:00:00Z", result[4].start.toString())
     }
 
+    @Test
+    fun `aggregateLogsToWorklogBlocks splits when date changes without pause`() {
+        val logs = listOf(
+            // Séquence sur le 19 mai
+            BranchLog("JIR-100", "2025-05-19T23:45:00Z"),
+            BranchLog("JIR-100", "2025-05-19T23:50:00Z"),
+            BranchLog("JIR-100", "2025-05-19T23:55:00Z"),
+
+            // Suite immédiate mais jour suivant
+            BranchLog("JIR-100", "2025-05-20T00:00:00Z"),
+            BranchLog("JIR-100", "2025-05-20T00:05:00Z")
+        )
+
+        val result = WorklogAggregator().aggregateLogsToWorklogBlocks(logs)
+
+        // ➤ Split attendu en 2 blocs : un le 19 mai, un le 20 mai
+        assertEquals(2, result.size)
+
+        // Bloc 1 = 3 logs sur le 19 → chunk complet → 15min
+        assertEquals("JIR-100", result[0].issueKey)
+        assertEquals(900, result[0].durationSeconds)
+        assertEquals("2025-05-19T23:45:00Z", result[0].start.toString())
+
+        // Bloc 2 = 2 logs restants → bloc incomplet → 10min
+        assertEquals("JIR-100", result[1].issueKey)
+        assertEquals(600, result[1].durationSeconds)
+        assertEquals("2025-05-20T00:00:00Z", result[1].start.toString())
+    }
 
 }

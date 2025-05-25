@@ -4,7 +4,6 @@ import com.jiraimputation.models.LogEntry
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
 
-
 const val CHUNK_SIZE = 3
 
 class WorklogAggregator {
@@ -12,7 +11,21 @@ class WorklogAggregator {
         return logs
             .fold(mutableListOf(mutableListOf<LogEntry.BranchLog>())) { acc, entry ->
                 when (entry) {
-                    is LogEntry.BranchLog -> acc.last().add(entry)
+                    is LogEntry.BranchLog -> {
+                        val current = acc.last()
+                        val lastLog = current.lastOrNull()
+
+                        if (
+                            lastLog != null &&
+                            lastLog.timestamp.substring(0, 10) != entry.timestamp.substring(0, 10)
+                        ) {
+                            // Changement de jour → nouvelle séquence
+                            acc.add(mutableListOf(entry))
+                        } else {
+                            current.add(entry)
+                        }
+                    }
+
                     is LogEntry.PauseMarker -> if (acc.last().isNotEmpty()) {
                         acc.add(mutableListOf())
                     }
