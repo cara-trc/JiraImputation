@@ -28,9 +28,10 @@
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <postStartupActivity implementation="com.jiraimputation.logger.TrackerPlugin"/>
+        <applicationInitializedListener implementation="com.jiraimputation.logger.LoggerAppListener"/>
+
         <statusBarWidgetFactory implementation="com.jiraimputation.logger.ui.TrackingStatusWidgetFactory"/>
-        <!-- Déclaration du groupe de notifications -->
+
         <notificationGroup id="JiraImputation Notifications"
                            displayType="BALLOON"
                            isLogByDefault="true"/>
