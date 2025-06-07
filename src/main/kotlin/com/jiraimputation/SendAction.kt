@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.jiraimputation.SpecialTreatment.TransformSpecialLogs
 import com.jiraimputation.aggregator.WorklogAggregator
 import com.jiraimputation.models.LogEntry
 import com.jiraimputation.sender.WorklogSender
@@ -16,10 +17,10 @@ class WorklogAggregateSendAction : AnAction() {
         try {
 
             val userHome = System.getProperty("user.home")
-            val logFile = File(userHome, ".jira-tracker/worklog.json")
+            val logFile = File(userHome, ".jira-tracker/fakeworklog.json")
 
             val aggregator = WorklogAggregator()
-
+            val postTreatment = TransformSpecialLogs()
             val logs = logFile.readLines()
                 .filter { it.isNotBlank() }
                 .mapIndexedNotNull { index, line ->
@@ -32,7 +33,8 @@ class WorklogAggregateSendAction : AnAction() {
                 }
             val blocks = aggregator.aggregateLogsToWorklogBlocks(logs)
 
-            WorklogSender.sendAll(blocks)
+            val modifiedBlocks = postTreatment.replaceSpecialIssueKeys(blocks)
+            WorklogSender.sendAll(modifiedBlocks)
 
             Notifications.Bus.notify(
                 Notification("JiraImputation Notifications", "Succès", "${blocks.size} blocs imputés.", NotificationType.INFORMATION)
