@@ -1,12 +1,18 @@
 package com.jiraimputation.aggregator
 
+import com.jiraimputation.CalendarIntegration.GoogleCalendarClient
+import com.jiraimputation.CalendarIntegration.toWorklogBlock
 import com.jiraimputation.models.LogEntry
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
+import java.time.LocalDate
+import kotlin.time.Duration.Companion.seconds
 
 const val CHUNK_SIZE = 3
 
 class WorklogAggregator {
+
+    val googleCalendarClient = GoogleCalendarClient()
     fun splitSequences(logs: List<LogEntry>): List<List<LogEntry.BranchLog>> {
         return logs
             .fold(mutableListOf(mutableListOf<LogEntry.BranchLog>())) { acc, entry ->
@@ -35,7 +41,7 @@ class WorklogAggregator {
             .filter { it.isNotEmpty() }
     }
 
-     fun aggregateSequence(sequence: List<LogEntry.BranchLog>): List<WorklogBlock> {
+    fun aggregateSequence(sequence: List<LogEntry.BranchLog>): List<WorklogBlock> {
         return sequence
             .chunked(CHUNK_SIZE)
             .map { chunk ->
@@ -67,14 +73,76 @@ class WorklogAggregator {
         }
     }
 
-    fun aggregateLogsToWorklogBlocks(logs: List<LogEntry>): List<WorklogBlock> {
-        return splitSequences(logs)
-            .flatMap { sequence ->
-                val blocks = aggregateSequence(sequence)
-                mergeConsecutiveBlocks(blocks)
+    fun insertMeetingsInBlocks(
+        workBlocks: List<WorklogBlock>,
+        meetings: List<WorklogBlock>
+    ): List<WorklogBlock> {
+        if (meetings.isEmpty()) return workBlocks
+
+        var currentBlocks = workBlocks
+
+        val result = meetings
+            .sortedBy { it.start }
+            .fold(mutableListOf<WorklogBlock>()) { acc, meeting ->
+                val meetingStart = meeting.start
+                val meetingEnd = meeting.start + meeting.durationSeconds.seconds
+
+                currentBlocks = currentBlocks.flatMap { block ->
+                    val blockStart = block.start
+                    val blockEnd = block.start + block.durationSeconds.seconds
+
+                    when {
+                        // Block full during the meeting => delete the block
+                        blockStart >= meetingStart && blockEnd <= meetingEnd -> emptyList()
+
+                        // Block starts before the meeting and end after the beginning of the meeting => block end date is now the meeting start date
+                        blockStart < meetingStart && blockEnd > meetingStart && blockEnd <= meetingEnd -> listOf(
+                            block.copy(durationSeconds = (meetingStart - blockStart).inWholeSeconds.toInt())
+                        )
+
+                        // Bloc starts during the meeting => block startDate is now meeting endDate
+                        blockStart < meetingEnd && blockEnd > meetingEnd && blockStart >= meetingStart -> listOf(
+                            block.copy(
+                                start = meetingEnd,
+                                durationSeconds = (blockEnd - meetingEnd).inWholeSeconds.toInt()
+                            )
+                        )
+
+                        // Block starts before and end after the meeting => block is split
+                        blockStart < meetingStart && blockEnd > meetingEnd -> listOf(
+                            block.copy(durationSeconds = (meetingStart - blockStart).inWholeSeconds.toInt()),
+                            block.copy(
+                                start = meetingEnd,
+                                durationSeconds = (blockEnd - meetingEnd).inWholeSeconds.toInt()
+                            )
+                        )
+
+                        // No overlap
+                        else -> listOf(block)
+                    }
+                }
+
+                acc.apply { add(meeting) }
             }
+
+        return (result + currentBlocks).sortedBy { it.start }
+    }
+
+
+
+    fun aggregateLogsToWorklogBlocks(logs: List<LogEntry>): List<WorklogBlock> {
+        return splitSequences(logs).flatMap { sequence ->
+            val date = LocalDate.parse(sequence.first().timestamp.substring(0, 10))
+            val meetings = googleCalendarClient.getEventsFor(date).map { it.toWorklogBlock() }
+
+            val workBlocks = aggregateSequence(sequence)
+            val mergedWork = mergeConsecutiveBlocks(workBlocks)
+
+            insertMeetingsInBlocks(mergedWork, meetings)
+        }
     }
 }
+
 
 
 

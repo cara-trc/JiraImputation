@@ -2,11 +2,9 @@ package com.jiraimputation.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.jiraimputation.CalendarIntegration.GoogleCalendarAuth
+import com.jiraimputation.CalendarIntegration.GoogleCalendarClient
 import java.io.File
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
+
 
 class GoogleCalendarTestAction : AnAction("Test Google Calendar") {
 
@@ -18,8 +16,8 @@ class GoogleCalendarTestAction : AnAction("Test Google Calendar") {
 
         debugFile.appendText("==== Google Calendar Test ====\n")
         runCatching {
-            val googleCalendarAuth = GoogleCalendarAuth()
-            val events = googleCalendarAuth.getTodayEvents()
+            val googleClient = GoogleCalendarClient()
+            val events = googleClient.getTodayEvents()
             val filtered = events.filter { it.start.dateTime != null && it.end.dateTime != null }
 
             if (filtered.isEmpty()) {
