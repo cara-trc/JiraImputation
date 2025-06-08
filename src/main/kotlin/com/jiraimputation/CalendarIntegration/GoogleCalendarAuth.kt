@@ -34,7 +34,7 @@ class GoogleCalendarAuth {
             httpTransport, jsonFactory, secrets, listOf("https://www.googleapis.com/auth/calendar.readonly")
         )
             .setAccessType("offline")
-            .setDataStoreFactory(FileDataStoreFactory(File("tokens")))
+            .setDataStoreFactory(FileDataStoreFactory(  File(System.getProperty("user.home"), ".jira-tracker/tokens")))
             .build()
 
         val receiver = LocalServerReceiver.Builder().setPort(8888).build()
