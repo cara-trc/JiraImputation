@@ -15,7 +15,6 @@ import java.io.File
 class WorklogAggregateSendAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         try {
-
             val userHome = System.getProperty("user.home")
             val logFile = File(userHome, ".jira-tracker/fakeworklog.json")
 

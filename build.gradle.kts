@@ -10,6 +10,7 @@ version = "0.1-ALPHA-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    google()
     intellijPlatform {
         defaultRepositories()
     }
@@ -37,6 +38,12 @@ dependencies {
     // OkHttp pour les logs & header auth
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+
+    //Google Calendar API
+    implementation("com.google.apis:google-api-services-calendar:v3-rev411-1.25.0")
+    implementation("com.google.api-client:google-api-client:1.34.1")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
+    implementation("com.google.http-client:google-http-client-gson:1.34.1")
 }
 
 intellijPlatform {
