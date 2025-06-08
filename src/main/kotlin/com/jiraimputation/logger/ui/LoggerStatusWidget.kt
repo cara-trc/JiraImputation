@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.StatusBarWidget.TextPresentation
 import com.intellij.util.Consumer
 import com.jiraimputation.logger.LoggerState
 import com.jiraimputation.models.LogEntry
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -37,7 +38,7 @@ class LoggerStatusWidget : StatusBarWidget, TextPresentation {
             if (LoggerState.trackingPaused) {
                 val file = File(System.getProperty("user.home"), ".jira-tracker/worklog.json")
                 val json = Json { prettyPrint = false }
-                val pauseMarker = json.encodeToString(LogEntry.serializer(), LogEntry.PauseMarker)
+                val pauseMarker = json.encodeToString(LogEntry.serializer(), LogEntry.PauseMarker(Clock.System.now().toString()))
                 file.appendText("$pauseMarker\n")
             }
             statusBar?.updateWidget(ID()) // Rafraîchit le texte du widget

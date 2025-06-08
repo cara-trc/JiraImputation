@@ -14,12 +14,12 @@ class WorklogAggregatorFullEndToEndTests {
             BranchLog("JIR-1", "2025-05-18T09:05:00Z"),
             BranchLog("JIR-2", "2025-05-18T09:10:00Z"), // bloc 1 = [JIR-1, JIR-1, JIR-2] → majority = JIR-1
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T09:15:00Z"),
 
             BranchLog("JIR-2", "2025-05-18T10:00:00Z"),
             BranchLog("JIR-2", "2025-05-18T10:05:00Z"), // bloc 2 = [JIR-2, JIR-2] → duration = 10min
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T10:08:00Z"),
 
             BranchLog("JIR-3", "2025-05-18T11:00:00Z"), // bloc 3 = [JIR-3] → 5min
             BranchLog("JIR-3", "2025-05-18T11:05:00Z"),
@@ -51,17 +51,17 @@ class WorklogAggregatorFullEndToEndTests {
             BranchLog("JIR-1", "2025-05-18T09:00:00Z"),
             BranchLog("JIR-1", "2025-05-18T09:05:00Z"),
 
-            LogEntry.PauseMarker, // coupe avant 3 logs → bloc incomplet de 10min
+            LogEntry.PauseMarker("2025-05-18T09:06:00Z"), // coupe avant 3 logs → bloc incomplet de 10min
 
             BranchLog("JIR-2", "2025-05-18T10:00:00Z"),
 
-            LogEntry.PauseMarker, // coupe après 1 log → bloc incomplet de 5min
+            LogEntry.PauseMarker("2025-05-18T10:02:00Z"), // coupe après 1 log → bloc incomplet de 5min
 
             BranchLog("JIR-3", "2025-05-18T11:00:00Z"),
             BranchLog("JIR-3", "2025-05-18T11:05:00Z"),
             BranchLog("JIR-3", "2025-05-18T11:10:00Z"),
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T11:15:00Z"),
 
             BranchLog("JIR-4", "2025-05-18T12:00:00Z"),
             BranchLog("JIR-4", "2025-05-18T12:05:00Z") // pas de pause après → bloc incomplet à la fin
@@ -96,20 +96,20 @@ class WorklogAggregatorFullEndToEndTests {
     fun `aggregateLogsToWorklogBlocks handles absolute chaos without crying`() {
         val logs = listOf(
             // Bruit au début
-            LogEntry.PauseMarker,
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T07:12:00Z"),
+            LogEntry.PauseMarker("2025-05-18T07:45:00Z"),
 
             // Séquence 1 : 3 logs mélangés → majority = BUG-1
             BranchLog("BUG-1", "2025-05-18T08:00:00Z"),
             BranchLog("FEAT-2", "2025-05-18T08:05:00Z"),
             BranchLog("BUG-1", "2025-05-18T08:10:00Z"),
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T08:12:00Z"),
 
             // Séquence 2 : un seul log → 5min
             BranchLog("HOTFIX", "2025-05-18T09:00:00Z"),
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T09:13:00Z"),
 
             // Séquence 3 : 7 logs → 2 chunks + 1 remaining
             BranchLog("SUP-3", "2025-05-18T10:00:00Z"),
@@ -120,13 +120,13 @@ class WorklogAggregatorFullEndToEndTests {
             BranchLog("SUP-3", "2025-05-18T10:25:00Z"),
             BranchLog("SUP-3", "2025-05-18T10:30:00Z"),
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T10:35:00Z"),
 
             // Séquence 4 : 2 logs, même clé → fusion attendue
             BranchLog("TASK-9", "2025-05-18T11:00:00Z"),
             BranchLog("TASK-9", "2025-05-18T11:05:00Z"),
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T11:05:00Z"),
 
             // Séquence 5 : 3 logs, même clé → merge → seul bloc
             BranchLog("FEAT-X", "2025-05-18T12:00:00Z"),

@@ -29,7 +29,7 @@ class WorklogAggregatorSplitTest {
     fun `splitSequences splits on PauseMarker`() {
         val logs = listOf(
             BranchLog("JIR-1", "2025-05-18T10:00:00Z"),
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T10:10:00Z"),
             BranchLog("JIR-2", "2025-05-18T11:00:00Z")
         )
 
@@ -43,10 +43,10 @@ class WorklogAggregatorSplitTest {
     @Test
     fun `splitSequences skips empty blocks between pauses`() {
         val logs = listOf(
-            LogEntry.PauseMarker,
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T10:10:00Z"),
+            LogEntry.PauseMarker("2025-05-18T10:15:00Z"),
             BranchLog("JIR-3", "2025-05-18T12:00:00Z"),
-            LogEntry.PauseMarker
+            LogEntry.PauseMarker("2025-05-18T12:10:00Z"),
         )
 
         val result = aggregator.splitSequences(logs)
@@ -59,7 +59,7 @@ class WorklogAggregatorSplitTest {
     fun `splitSequences handles trailing entries`() {
         val logs = listOf(
             BranchLog("JIR-1", "2025-05-18T09:00:00Z"),
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T09:10:00Z"),
             BranchLog("JIR-2", "2025-05-18T09:15:00Z"),
             BranchLog("JIR-2", "2025-05-18T09:20:00Z")
         )
@@ -75,15 +75,15 @@ class WorklogAggregatorSplitTest {
     fun `splitSequences survives chaotic real-life log layout with mixed branches, scattered pauses, and date changes`() {
         val logs = listOf(
             // bruit initial
-            LogEntry.PauseMarker,
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T08:10:00Z"),
+            LogEntry.PauseMarker("2025-05-18T08:15:00Z"),
 
             // bloc 1 : 2 logs, même branche (jour 1)
             BranchLog("FEAT-1", "2025-05-18T09:00:00Z"),
             BranchLog("FEAT-1", "2025-05-18T09:05:00Z"),
 
             // pause isolée
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T09:06:00Z"),
 
             // bloc 2 : logs en désordre (jour 1)
             BranchLog("BUG-42", "2025-05-18T09:10:00Z"),
@@ -93,14 +93,14 @@ class WorklogAggregatorSplitTest {
             BranchLog("FEAT-2", "2025-05-18T09:30:00Z"),
 
             // pause
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T09:32:00Z"),
 
             // bloc 3 : 1 seul log (jour 1)
             BranchLog("HOTFIX", "2025-05-18T09:35:00Z"),
 
             // pause inutile
-            LogEntry.PauseMarker,
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-18T09:38:00Z"),
+            LogEntry.PauseMarker("2025-05-18T09:39:00Z"),
 
             // bloc 4 : 8 logs mélangés (jour 2)
             BranchLog("FEAT-3", "2025-05-19T09:40:00Z"),
@@ -112,14 +112,14 @@ class WorklogAggregatorSplitTest {
             BranchLog("FEAT-3", "2025-05-19T10:10:00Z"),
             BranchLog("FEAT-3", "2025-05-19T10:15:00Z"),
 
-            LogEntry.PauseMarker,
+            LogEntry.PauseMarker("2025-05-19T10:18:00Z"),
 
             // ❗ bloc 5 : test changement de jour SANS pause
             BranchLog("FEAT-4", "2025-05-19T23:55:00Z"),
             BranchLog("FEAT-4", "2025-05-20T09:00:00Z"),
 
             // pause de fin
-            LogEntry.PauseMarker
+            LogEntry.PauseMarker("2025-05-20T10:10:00Z"),
         )
 
         val result = aggregator.splitSequences(logs)

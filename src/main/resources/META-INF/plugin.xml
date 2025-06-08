@@ -16,7 +16,7 @@
 
     <actions>
         <action id="IntegrationTest"
-                class="com.jiraimputation.WorklogAggregateSendAction"
+                class="com.jiraimputation.actions.WorklogAggregateSendAction"
                 text="Call It A Day"
                 description="Send clean blocks to JIRA API">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
@@ -27,6 +27,13 @@
                 text="Test Google Calendar"
                 description="Affiche les prochains événements du calendrier">
         <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="LunchBreakToggleAction"
+                class="com.jiraimputation.actions.LunchBreakToggleAction"
+                text="Force Lunch Break"
+                description="Toggle automatic lunch break from 12h to 14h">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>
     <!-- Product and plugin compatibility requirements.

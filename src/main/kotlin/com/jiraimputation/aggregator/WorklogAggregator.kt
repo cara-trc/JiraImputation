@@ -2,6 +2,8 @@ package com.jiraimputation.aggregator
 
 import com.jiraimputation.CalendarIntegration.GoogleCalendarClient
 import com.jiraimputation.CalendarIntegration.toWorklogBlock
+import com.jiraimputation.LunchInserter.LunchBreakManager
+import com.jiraimputation.LunchInserter.LunchUserPreference
 import com.jiraimputation.models.LogEntry
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
@@ -13,8 +15,11 @@ const val CHUNK_SIZE = 3
 class WorklogAggregator {
 
     val googleCalendarClient = GoogleCalendarClient()
+    val lunchBreakManager = LunchBreakManager(LunchUserPreference.forceLaunch)
+
     fun splitSequences(logs: List<LogEntry>): List<List<LogEntry.BranchLog>> {
-        return logs
+        val logsWithLunch = lunchBreakManager.applyIfNeeded(logs)
+        return logsWithLunch
             .fold(mutableListOf(mutableListOf<LogEntry.BranchLog>())) { acc, entry ->
                 when (entry) {
                     is LogEntry.BranchLog -> {

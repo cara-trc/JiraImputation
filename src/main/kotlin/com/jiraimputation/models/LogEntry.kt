@@ -12,5 +12,5 @@ sealed class LogEntry {
     ) : LogEntry()
 
     @Serializable
-    object PauseMarker : LogEntry()
+    data class PauseMarker(val timestamp: String) : LogEntry()
 }
