@@ -20,7 +20,7 @@ class WorklogAggregateSendAction : AnAction() {
             LunchUserPreference.forceLaunch = PropertiesComponent.getInstance().getBoolean("LunchBreakForce", false)
 
             val userHome = System.getProperty("user.home")
-            val logFile = File(userHome, ".jira-tracker/fakeworklog.json")
+            val logFile = File(userHome, ".jira-tracker/worklog.json")
 
             val aggregator = WorklogAggregator()
             val postTreatment = TransformSpecialLogs()
