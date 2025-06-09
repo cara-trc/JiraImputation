@@ -5,6 +5,7 @@ import com.jiraimputation.LunchInserter.LunchUserPreference
 import com.jiraimputation.models.LogEntry
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
+import kotlin.time.Duration.Companion.seconds
 
 const val CHUNK_SIZE = 3
 
@@ -63,9 +64,12 @@ class WorklogAggregator {
     fun mergeConsecutiveBlocks(blocks: List<WorklogBlock>): List<WorklogBlock> {
         return blocks.fold(mutableListOf()) { acc, block ->
             if (acc.isNotEmpty() && acc.last().issueKey == block.issueKey) {
-                acc[acc.lastIndex] = acc.last().copy(
-                    durationSeconds = acc.last().durationSeconds + block.durationSeconds
-                )
+                val last = acc.last()
+                val lastStart = last.start
+                val newEnd = block.start + block.durationSeconds.seconds
+                val newDuration = (newEnd - lastStart).inWholeSeconds.toInt()
+
+                acc[acc.lastIndex] = last.copy(durationSeconds = newDuration)
             } else {
                 acc.add(block)
             }
