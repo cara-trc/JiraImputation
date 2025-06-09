@@ -5,10 +5,18 @@ import com.jiraimputation.SpecialTreatment.SpecialsTasks
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
 
-fun Event.toWorklogBlock(): WorklogBlock {
-    val startInstant = Instant.fromEpochMilliseconds(this.start.dateTime.value)
-    val endInstant = Instant.fromEpochMilliseconds(this.end.dateTime.value)
-    val duration = endInstant.minus(startInstant).inWholeSeconds.toInt()
+fun Event.toWorklogBlockOrNull(): WorklogBlock? {
+    val startDateTime = this.start.dateTime
+    val endDateTime = this.end.dateTime
+
+    if (startDateTime == null || endDateTime == null) {
+        println("⏭️ Skip all-day or incomplete event: ${this.summary}")
+        return null
+    }
+
+    val startInstant = Instant.fromEpochMilliseconds(startDateTime.value)
+    val endInstant = Instant.fromEpochMilliseconds(endDateTime.value)
+    val duration = (endInstant - startInstant).inWholeSeconds.toInt()
 
     return WorklogBlock(
         issueKey = SpecialsTasks.meetings,

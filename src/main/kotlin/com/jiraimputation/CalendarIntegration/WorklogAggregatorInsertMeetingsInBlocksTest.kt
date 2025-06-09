@@ -1,4 +1,4 @@
-import com.jiraimputation.aggregator.WorklogAggregator
+import com.jiraimputation.CalendarIntegration.MeetingIntegrator
 import com.jiraimputation.models.WorklogBlock
 import junit.framework.TestCase.assertEquals
 import kotlinx.datetime.Instant
@@ -9,13 +9,13 @@ import kotlin.time.Duration.Companion.minutes
 
 class InsertMeetingsInBlocksTest {
 
-    val WorklogAggregator = WorklogAggregator()
+    val meetingIntegrator = MeetingIntegrator()
     @Test
     fun `Blocks starts before meeting`() {
         val git = WorklogBlock("GIT", Instant.parse("2025-06-08T09:30:00Z"), 60 * 60)
         val meeting = WorklogBlock("MEETING", Instant.parse("2025-06-08T10:00:00Z"), 60 * 60)
 
-        val result = WorklogAggregator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
+        val result = meetingIntegrator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
 
         assertEquals(2, result.size)
 
@@ -31,7 +31,7 @@ class InsertMeetingsInBlocksTest {
         val git = WorklogBlock("GIT", Instant.parse("2025-06-08T10:15:00Z"), 30 * 60)
         val meeting = WorklogBlock("MEETING", Instant.parse("2025-06-08T10:00:00Z"), 60 * 60)
 
-        val result = WorklogAggregator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
+        val result = meetingIntegrator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
 
         assertEquals(1, result.size)
         assertEquals("MEETING", result[0].issueKey)
@@ -42,7 +42,7 @@ class InsertMeetingsInBlocksTest {
         val git = WorklogBlock("GIT", Instant.parse("2025-06-08T10:30:00Z"), 60 * 60)
         val meeting = WorklogBlock("MEETING", Instant.parse("2025-06-08T10:00:00Z"), 60 * 60)
 
-        val result = WorklogAggregator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
+        val result = meetingIntegrator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
 
         assertEquals(2, result.size)
 
@@ -58,8 +58,7 @@ class InsertMeetingsInBlocksTest {
         val git = WorklogBlock("GIT", Instant.parse("2025-06-08T09:30:00Z"), 180 * 60)
         val meeting = WorklogBlock("MEETING", Instant.parse("2025-06-08T10:30:00Z"), 60 * 60)
 
-        val result = WorklogAggregator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
-
+        val result = meetingIntegrator.insertMeetingsInBlocks(listOf(git), listOf(meeting))
         assertEquals(3, result.size)
 
         assertEquals("GIT", result[0].issueKey)
@@ -85,7 +84,7 @@ class InsertMeetingsInBlocksTest {
             WorklogBlock("MEETING", Instant.parse("2025-06-08T16:00:00Z"), 90 * 60),
         )
 
-        val result = WorklogAggregator.insertMeetingsInBlocks(listOf(workBlock), meetings)
+        val result = meetingIntegrator.insertMeetingsInBlocks(listOf(workBlock), meetings)
 
 
         assertEquals(7, result.size) // ✅ il y a bien 7 blocs

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.jiraimputation.CalendarIntegration.GoogleCalendarClient
 import java.io.File
+import java.time.LocalDate
 
 
 class GoogleCalendarTestAction : AnAction("Test Google Calendar") {
@@ -17,7 +18,7 @@ class GoogleCalendarTestAction : AnAction("Test Google Calendar") {
         debugFile.appendText("==== Google Calendar Test ====\n")
         runCatching {
             val googleClient = GoogleCalendarClient()
-            val events = googleClient.getTodayEvents()
+            val events = googleClient.getEventsFor(LocalDate.now())
             val filtered = events.filter { it.start.dateTime != null && it.end.dateTime != null }
 
             if (filtered.isEmpty()) {

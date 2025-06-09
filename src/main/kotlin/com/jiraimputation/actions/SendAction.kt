@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.jiraimputation.CalendarIntegration.MeetingIntegrator
 import com.jiraimputation.LunchInserter.LunchUserPreference
 import com.jiraimputation.SpecialTreatment.TransformSpecialLogs
 import com.jiraimputation.aggregator.WorklogAggregator
@@ -23,6 +24,7 @@ class WorklogAggregateSendAction : AnAction() {
             val logFile = File(userHome, ".jira-tracker/worklog.json")
 
             val aggregator = WorklogAggregator()
+            val meetingIntegrator = MeetingIntegrator()
             val postTreatment = TransformSpecialLogs()
             val logs = logFile.readLines()
                 .filter { it.isNotBlank() }
@@ -37,7 +39,9 @@ class WorklogAggregateSendAction : AnAction() {
             val blocks = aggregator.aggregateLogsToWorklogBlocks(logs)
 
             val modifiedBlocks = postTreatment.replaceSpecialIssueKeys(blocks)
-            WorklogSender.sendAll(modifiedBlocks)
+
+            val modifiedBlocksWithEvents = meetingIntegrator.integrateMeetings(modifiedBlocks)
+            WorklogSender.sendAll(modifiedBlocksWithEvents)
 
             Notifications.Bus.notify(
                 Notification("JiraImputation Notifications", "Succès", "${blocks.size} blocs imputés.", NotificationType.INFORMATION)
