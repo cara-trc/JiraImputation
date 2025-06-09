@@ -1,13 +1,11 @@
 package com.jiraimputation.actions
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.jiraimputation.CalendarIntegration.MeetingIntegrator
-import com.jiraimputation.LunchInserter.LunchUserPreference
 import com.jiraimputation.SpecialTreatment.TransformSpecialLogs
 import com.jiraimputation.aggregator.WorklogAggregator
 import com.jiraimputation.models.LogEntry
@@ -18,7 +16,7 @@ import java.io.File
 class WorklogAggregateSendAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         try {
-            LunchUserPreference.forceLaunch = PropertiesComponent.getInstance().getBoolean("LunchBreakForce", false)
+           // LunchUserPreference.forceLaunch = PropertiesComponent.getInstance().getBoolean("LunchBreakForce", false)
 
             val userHome = System.getProperty("user.home")
             val logFile = File(userHome, ".jira-tracker/worklog.json")
