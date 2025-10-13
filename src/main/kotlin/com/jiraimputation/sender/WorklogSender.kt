@@ -20,7 +20,22 @@ import java.time.format.DateTimeFormatter
 // --------- Request DTO ---------
 data class WorklogRequest(
     val started: String,
-    val timeSpentSeconds: Int
+    val timeSpentSeconds: Int,
+    val comment: Map<String, Any> = mapOf(
+        "type" to "doc",
+        "version" to 1,
+        "content" to listOf(
+            mapOf(
+                "type" to "paragraph",
+                "content" to listOf(
+                    mapOf(
+                        "type" to "text",
+                        "text" to "Imputé automatiquement depuis le plugin JiraImputation"
+                    )
+                )
+            )
+        )
+    ),
 )
 
 // --------- Retrofit API ---------
@@ -89,7 +104,7 @@ object WorklogSender {
             }
 
             debugFile.appendText(logLine + "\n")
-            if(response.isSuccessful){
+            if (response.isSuccessful) {
                 //logs sent successfully, reset the json
                 logFile.writeText("")
             }
