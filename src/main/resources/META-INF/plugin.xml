@@ -12,29 +12,27 @@
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description>"This project is a side project from myself to get rid of the burden of the imputation process. Not meant to be online and mean for personal use</description>*/
+    <description>"This project is a side project from myself to get rid of the burden of the imputation process. Not meant to be online and mean for personal use</description>
 
     <actions>
-        <action id="IntegrationTest"
-                class="com.jiraimputation.actions.WorklogAggregateSendAction"
-                text="Call It A Day"
-                description="Send clean blocks to JIRA API">
+        <group id="JiraImputation.Menu" text="JiraImputation" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
 
-        <action id="GoogleCalendarTestAction"
-                class="com.jiraimputation.actions.GoogleCalendarTestAction"
-                text="Test Google Calendar"
-                description="Affiche les prochains événements du calendrier">
-        <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
+            <action id="IntegrationTest"
+                    class="com.jiraimputation.actions.WorklogAggregateSendAction"
+                    text="Call It A Day"
+                    description="Send clean blocks to JIRA API"/>
 
-        <action id="LunchBreakToggleAction"
-                class="com.jiraimputation.actions.LunchBreakToggleAction"
-                text="Force Lunch Break"
-                description="Toggle automatic lunch break from 12h to 14h">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
+            <action id="GoogleCalendarTestAction"
+                    class="com.jiraimputation.actions.GoogleCalendarTestAction"
+                    text="Test Google Calendar"
+                    description="Affiche les prochains événements du calendrier"/>
+
+            <action id="LunchBreakToggleAction"
+                    class="com.jiraimputation.actions.LunchBreakToggleAction"
+                    text="Force Lunch Break"
+                    description="Toggle automatic lunch break from 12h to 14h"/>
+        </group>
     </actions>
     <!-- Product and plugin compatibility requirements.
            Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
