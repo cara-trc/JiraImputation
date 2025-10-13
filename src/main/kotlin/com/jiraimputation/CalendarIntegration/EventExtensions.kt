@@ -22,8 +22,13 @@ fun Event.toWorklogBlockOrNull(): WorklogBlock? {
     val endInstant = Instant.fromEpochMilliseconds(endDateTime.value)
     val duration = (endInstant - startInstant).inWholeSeconds.toInt()
 
+    val issueKeyFromDescription = this.description?.let {
+        val regex = Regex("""\[(.*?)]""")
+        regex.find(it)?.groupValues?.get(1)
+    } ?: return null
+
     return WorklogBlock(
-        issueKey = SpecialsTasks.meetings,
+        issueKey = issueKeyFromDescription,
         start = startInstant,
         durationSeconds = duration
     )
