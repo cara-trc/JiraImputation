@@ -13,6 +13,10 @@ fun Event.toWorklogBlockOrNull(): WorklogBlock? {
         println("⏭️ Skip all-day or incomplete event: ${this.summary}")
         return null
     }
+    if (!this.isAttendedByMe()) {
+        println("⏭️ Skip event not attended by me: ${this.summary}")
+        return null
+    }
 
     val startInstant = Instant.fromEpochMilliseconds(startDateTime.value)
     val endInstant = Instant.fromEpochMilliseconds(endDateTime.value)
@@ -23,4 +27,12 @@ fun Event.toWorklogBlockOrNull(): WorklogBlock? {
         start = startInstant,
         durationSeconds = duration
     )
+}
+
+fun Event.isAttendedByMe(): Boolean {
+    if (organizer?.self == true) {
+        return true
+    }
+    val attendee = attendees?.find { it.self == true }
+    return attendee?.responseStatus == "accepted"
 }
