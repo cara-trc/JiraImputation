@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.jiraimputation"
-version = "0.5_CLOSED_BETA_SNAPSHOT"
+version = "0.5.2_CLOSED_BETA_SNAPSHOT"
 
 repositories {
     mavenCentral()
