@@ -3,6 +3,7 @@ package com.jiraimputation.CalendarIntegration
 import com.google.api.services.calendar.model.Event
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
+import org.jsoup.Jsoup
 
 fun Event.toWorklogBlockOrNull(): WorklogBlock? {
     val startDateTime = this.start.dateTime
@@ -21,10 +22,15 @@ fun Event.toWorklogBlockOrNull(): WorklogBlock? {
     val endInstant = Instant.fromEpochMilliseconds(endDateTime.value)
     val duration = (endInstant - startInstant).inWholeSeconds.toInt()
 
-    val issueKeyFromDescription = this.description?.let {
-        val regex = Regex("""\[(.*?)]""")
-        regex.find(it)?.groupValues?.get(1)
-    } ?: return null
+    val descriptionText = this.description?.let { Jsoup.parse(it).text() } ?: return null
+
+    val issueKeyFromDescription = Regex("""\[(.+?)]""")
+        .find(descriptionText)
+        ?.groupValues
+        ?.get(1)
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?: return null
 
     return WorklogBlock(
         issueKey = issueKeyFromDescription,
