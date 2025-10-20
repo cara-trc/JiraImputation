@@ -1,5 +1,6 @@
 package com.jiraimputation.SpecialTreatment
 
+import com.jiraimputation.JiraSettings
 import com.jiraimputation.models.WorklogBlock
 
 class TransformSpecialLogs {
@@ -9,8 +10,8 @@ class TransformSpecialLogs {
 
         return blocks.map { block ->
             val newIssueKey = when {
-                block.issueKey.equals("support", ignoreCase = true) -> SpecialsTasks.supportCart
-                versionPattern.matches(block.issueKey) -> SpecialsTasks.runManagement
+                block.issueKey.equals("support", ignoreCase = true) -> JiraSettings.supportCard
+                versionPattern.matches(block.issueKey) -> JiraSettings.runManagement
                 else -> block.issueKey
             }
             block.copy(issueKey = newIssueKey)

@@ -8,6 +8,9 @@ object JiraSettings {
     val email get() = svc.email()
     val jiraToken get() = svc.jiraToken()
     val baseUrl get() = svc.baseUrl()
+    val supportCard get() = svc.supportCard()
+    val runManagement get() = svc.runManagement()
 
-    fun update(email: String, token: String, baseUrl: String) = svc.update(email.trim(), token.trim(), baseUrl.trim())
+    fun update(email: String, token: String, baseUrl: String) = svc.update(email, token, baseUrl)
+    fun updateSpecials(supportCard: String, runManagement: String) = svc.updateSpecials(supportCard, runManagement)
 }

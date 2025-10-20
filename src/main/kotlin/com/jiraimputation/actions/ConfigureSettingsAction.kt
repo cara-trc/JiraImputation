@@ -21,47 +21,58 @@ private class JiraSettingsDialog : DialogWrapper(true) {
     private val tokenField = JPasswordField(JiraSettings.jiraToken)
     private val urlField = JTextField(JiraSettings.baseUrl.ifBlank { "https://xxxxx.atlassian.net" })
 
+    private val supportField = JTextField(JiraSettings.supportCard)
+    private val runMgmtField = JTextField(JiraSettings.runManagement)
+
     init {
-        title = "Configurer Jira Settings"
-        init()
+        title = "Configurer Jira Settings"; init()
     }
 
     override fun createCenterPanel(): JComponent {
-        val form = JPanel()
-        form.layout = BoxLayout(form, BoxLayout.Y_AXIS)
-
-        fun row(label: String, comp: JComponent): JPanel {
-            val p = JPanel(BorderLayout(8, 0))
-            p.maximumSize = Dimension(500, 40)
-            p.add(JLabel(label), BorderLayout.WEST)
-            p.add(comp, BorderLayout.CENTER)
-            return p
+        fun row(label: String, comp: JComponent) = JPanel(BorderLayout(8, 0)).apply {
+            maximumSize = Dimension(520, 40)
+            add(JLabel(label), BorderLayout.WEST); add(comp, BorderLayout.CENTER)
         }
-
-        form.add(row("Email Jira :", emailField))
-        form.add(Box.createVerticalStrut(10))
-        form.add(row("API Token :", tokenField))
-        form.add(Box.createVerticalStrut(10))
-        form.add(row("Base URL Jira :", urlField))
-        return form
+        return JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            add(row("Email Jira :", emailField)); add(Box.createVerticalStrut(10))
+            add(row("API Token  :", tokenField)); add(Box.createVerticalStrut(10))
+            add(row("Base URL   :", urlField)); add(Box.createVerticalStrut(16))
+            add(row("Support card :", supportField)); add(Box.createVerticalStrut(8))
+            add(row("Run management :", runMgmtField))
+        }
     }
 
     override fun doValidate(): ValidationInfo? {
         val email = emailField.text.trim()
         val token = String(tokenField.password).trim()
         val base = urlField.text.trim()
+        val keyRe = Regex("^[A-Z][A-Z0-9_]+-\\d+$") // ex: JIR-123, PROJ_ERP-42
 
-        if (!email.contains("@")) return ValidationInfo("Email invalide", emailField)
-        if (token.isEmpty()) return ValidationInfo("Le token ne peut pas être vide", tokenField)
-        if (!base.startsWith("http")) return ValidationInfo("Base URL doit commencer par http(s)://", urlField)
-        return null
+        return when {
+            !email.contains("@") -> ValidationInfo("Email invalide", emailField)
+            token.isEmpty() -> ValidationInfo("Le token ne peut pas être vide", tokenField)
+            !base.startsWith("http") -> ValidationInfo("Base URL doit commencer par http(s)://", urlField)
+            supportField.text.isNotBlank() && !keyRe.matches(supportField.text.trim()) ->
+                ValidationInfo("Format attendu: PROJ-123", supportField)
+
+            runMgmtField.text.isNotBlank() && !keyRe.matches(runMgmtField.text.trim()) ->
+                ValidationInfo("Format attendu: PROJ-123", runMgmtField)
+
+            else -> null
+        }
     }
 
     override fun doOKAction() {
-        val email = emailField.text.trim()
-        val token = String(tokenField.password).trim()
-        val base = urlField.text.trim()
-        JiraSettings.update(email, token, base)
+        JiraSettings.update(
+            emailField.text.trim(),
+            String(tokenField.password).trim(),
+            urlField.text.trim()
+        )
+        JiraSettings.updateSpecials(
+            supportField.text.trim().ifBlank { "JIR-4" },
+            runMgmtField.text.trim().ifBlank { "JIR-5" }
+        )
         super.doOKAction()
     }
 }

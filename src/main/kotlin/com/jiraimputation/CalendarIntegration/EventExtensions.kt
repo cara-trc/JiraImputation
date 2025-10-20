@@ -1,7 +1,6 @@
 package com.jiraimputation.CalendarIntegration
 
 import com.google.api.services.calendar.model.Event
-import com.jiraimputation.SpecialTreatment.SpecialsTasks
 import com.jiraimputation.models.WorklogBlock
 import kotlinx.datetime.Instant
 

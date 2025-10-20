@@ -1,6 +1,6 @@
 package com.jiraimputation.SpecialTreatment.tests
 
-import com.jiraimputation.SpecialTreatment.SpecialsTasks
+import com.jiraimputation.JiraSettings
 import com.jiraimputation.SpecialTreatment.TransformSpecialLogs
 import com.jiraimputation.models.WorklogBlock
 import junit.framework.TestCase.assertEquals
@@ -24,8 +24,8 @@ class TransformSpecialLogsTest {
         val result = transformer.replaceSpecialIssueKeys(blocks)
 
         // Then
-        assertEquals(SpecialsTasks.supportCart, result[0].issueKey)
-        assertEquals(SpecialsTasks.runManagement, result[1].issueKey)
+        assertEquals(JiraSettings.supportCard, result[0].issueKey)
+        assertEquals(JiraSettings.runManagement, result[1].issueKey)
         assertEquals("JIR-123", result[2].issueKey)
 
         // On vérifie que les instants sont conservés
@@ -53,11 +53,11 @@ class TransformSpecialLogsTest {
 
         // Then
         val expectedKeys = listOf(
-            SpecialsTasks.supportCart,     // support
-            SpecialsTasks.supportCart,     // Support
-            SpecialsTasks.runManagement,   // 2.3
-            SpecialsTasks.runManagement,   // 1.0.0
-            SpecialsTasks.runManagement,   // 3.14.159.265
+            JiraSettings.supportCard,     // support
+            JiraSettings.supportCard,     // Support
+            JiraSettings.runManagement,   // 2.3
+            JiraSettings.runManagement,   // 1.0.0
+            JiraSettings.runManagement,   // 3.14.159.265
             "v1.0",                        // inchangé
             "2_3_4",                       // inchangé
             "JIR-123"                      // inchangé
