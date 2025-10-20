@@ -1,9 +1,7 @@
 package com.jiraimputation.sender
 
-import com.jiraimputation.Secrets
 import com.jiraimputation.models.WorklogBlock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import com.jiraimputation.JiraSettings
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -50,9 +48,9 @@ interface JiraApi {
 // --------- Sender Singleton ---------
 object WorklogSender {
 
-    private const val EMAIL = Secrets.email
-    private const val API_TOKEN = Secrets.jiraToken
-    private const val BASE_URL = Secrets.baseUrl
+    private val EMAIL = JiraSettings.email
+    private val API_TOKEN = JiraSettings.jiraToken
+    private val BASE_URL = JiraSettings.baseUrl
 
     private val client = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply {

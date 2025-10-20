@@ -34,6 +34,10 @@
                     text="Login Google Calendar"
                     description="Ouvre le navigateur pour connecter Google Calendar et enregistrer la clé de session." />
 
+            <action id="com.jiraimputation.actions.ConfigureJiraSettingsAction"
+                    class="com.jiraimputation.actions.ConfigureJiraSettingsAction"
+                    text="Configure Jira Settings"
+                    description="Configurer email/token/baseUrl Jira"/>
 
             <action id="LunchBreakToggleAction"
                     class="com.jiraimputation.actions.LunchBreakToggleAction"
@@ -47,6 +51,8 @@
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.jiraimputation.JiraSettingsService"/>
+
         <applicationInitializedListener implementation="com.jiraimputation.logger.LoggerAppListener"/>
 
         <statusBarWidgetFactory implementation="com.jiraimputation.logger.ui.TrackingStatusWidgetFactory"/>
