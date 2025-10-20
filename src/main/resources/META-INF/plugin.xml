@@ -28,6 +28,13 @@
                     text="Test Google Calendar"
                     description="Affiche les prochains événements du calendrier"/>
 
+            <action
+                    id="com.jiraimputation.actions.GoogleAuthAction"
+                    class="com.jiraimputation.actions.GoogleAuthAction"
+                    text="Login Google Calendar"
+                    description="Ouvre le navigateur pour connecter Google Calendar et enregistrer la clé de session." />
+
+
             <action id="LunchBreakToggleAction"
                     class="com.jiraimputation.actions.LunchBreakToggleAction"
                     text="Force Lunch Break"

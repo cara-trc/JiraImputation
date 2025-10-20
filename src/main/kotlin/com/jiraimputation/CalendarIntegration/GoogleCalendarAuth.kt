@@ -1,49 +1,90 @@
 package com.jiraimputation.CalendarIntegration
 
-import com.google.api.client.auth.oauth2.Credential
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.JsonFactory
+import com.google.api.client.http.HttpRequest
+import com.google.api.client.http.HttpRequestInitializer
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
-import com.google.api.client.util.DateTime
-import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.calendar.Calendar
-import com.google.api.services.calendar.model.Event
-import java.io.File
-import java.io.FileReader
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.POST
 import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
-class GoogleCalendarAuth {
+class GoogleCalendarAuth(
+    applicationName: String = "JiraImputation"
+) {
+    val service: Calendar
 
-    private val jsonFactory: JsonFactory = GsonFactory.getDefaultInstance()
-    private val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
+    init {
+        val brokerUrl = GoogleCalendarConfig.brokerUrl()
+        val sessionJwt = GoogleCalendarConfig.sessionJwt()
+        val initializer = BrokerRequestInitializer(brokerUrl, sessionJwt)
+        service = Calendar.Builder(
+            NetHttpTransport(),
+            GsonFactory.getDefaultInstance(),
+            initializer
+        ).setApplicationName(applicationName).build()
+    }
+}
 
-    private fun getCredential(): Credential {
-        val userHome = System.getProperty("user.home")
-        val trackerDir = File(userHome, ".jira-tracker")
-        val credentialsFile = File(trackerDir, "credentials.json")
-        val secrets = GoogleClientSecrets.load(jsonFactory, FileReader(credentialsFile))
+/** Retrofit layer **/
+data class TokenRequest(val session: String)
+data class TokenResponse(val access_token: String, val expires_in: Long)
 
-        val flow = GoogleAuthorizationCodeFlow.Builder(
-            httpTransport, jsonFactory, secrets, listOf("https://www.googleapis.com/auth/calendar.readonly")
-        )
-            .setAccessType("offline")
-            .setDataStoreFactory(FileDataStoreFactory(  File(System.getProperty("user.home"), ".jira-tracker/tokens")))
+interface BrokerApi {
+    @POST("/token")
+    fun fetchToken(@Body body: TokenRequest): Call<TokenResponse>
+}
+
+/** Injecte un access_token via ton broker **/
+private class BrokerRequestInitializer(
+    private val serviceUrl: String,
+    private val sessionJwt: String
+) : HttpRequestInitializer {
+
+    private val cachedToken = AtomicReference<String?>(null)
+    private val expiresAtEpochSec = AtomicLong(0)
+
+    private val api: BrokerApi = run {
+        val logger = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+        val client = OkHttpClient.Builder().addInterceptor(logger).build()
+
+        Retrofit.Builder()
+            .baseUrl(serviceUrl.ensureEndsWithSlash())
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
-
-        val receiver = LocalServerReceiver.Builder().setPort(8888).build()
-        return AuthorizationCodeInstalledApp(flow, receiver).authorize("user")
+            .create(BrokerApi::class.java)
     }
 
-    val service: Calendar by lazy {
-        Calendar.Builder(httpTransport, jsonFactory, getCredential())
-            .setApplicationName("JiraImputation Calendar Integration")
-            .build()
+    override fun initialize(request: HttpRequest) {
+        val now = Instant.now().epochSecond
+        val token = if (cachedToken.get().isNullOrBlank() || now >= expiresAtEpochSec.get() - 5) {
+            val fresh = fetchAccessToken()
+            cachedToken.set(fresh.first)
+            expiresAtEpochSec.set(now + fresh.second)
+            fresh.first
+        } else {
+            cachedToken.get()!!
+        }
+        request.headers.authorization = "Bearer $token"
     }
+
+    private fun fetchAccessToken(): Pair<String, Long> {
+        val resp = api.fetchToken(TokenRequest(sessionJwt)).execute()
+        require(resp.isSuccessful) {
+            "Broker token error: ${resp.code()} ${resp.errorBody()?.string()}"
+        }
+        val body = resp.body() ?: error("Réponse vide du broker")
+        return body.access_token to body.expires_in
+    }
+
+    private fun String.ensureEndsWithSlash(): String =
+        if (endsWith("/")) this else "$this/"
 }
